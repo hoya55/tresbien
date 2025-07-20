@@ -2,79 +2,31 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>보조배터리 기내 반입 판정기</title>
+  <title>보조배터리 기내 반입 판정기 (통합)</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2em;
-      background: #f7f7f7;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1em;
-      background: #fff;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 0.6em;
-      text-align: center;
-    }
-    th {
-      background-color: #e8e8e8;
-    }
-    button {
-      padding: 0.7em 1.5em;
-      font-size: 1em;
-      margin-top: 1em;
-      border: none;
-      background: #1658a0;
-      color: #fff;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #11477c;
-    }
-    #resultBox {
-      margin-top: 2em;
-      padding: 1.2em;
-      border-radius: 8px;
-      font-weight: bold;
-      background: #fff;
-      min-height: 2em;
-      border: 1px solid #c8cff7;
-    }
-    .success {
-      background-color: #e6ffe6;
-      color: #007700;
-      border-color: #b0e6b0;
-    }
-    .fail {
-      background-color: #ffe6e6;
-      color: #c00;
-      border-color: #ffb6b6;
-    }
-    .explain {
-      font-size: 0.98em;
-      margin-bottom: 2em;
-      color: #444;
-    }
-    @media (max-width:600px) {
-      body { padding: 0.5em; }
-      table, th, td { font-size: 0.92em; }
-    }
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; background:#f7f7f7; padding:2em; }
+    table { width:100%; border-collapse:collapse; margin-bottom:2em; background:#fff;}
+    th, td { border:1px solid #ddd; padding:0.6em; text-align:center;}
+    th { background:#e8e8e8;}
+    button { padding:0.7em 1.3em; font-size:1em; border:none; background:#174883; color:#fff; border-radius:6px; cursor:pointer;}
+    button:hover {background:#145079;}
+    .explain {color:#333; font-size:1em; margin-bottom:1.3em;}
+    #resultBox, #simpleResultBox { margin:2em 0 1.5em; padding:1em; border-radius:8px; font-weight:bold; background: #fff; min-height:2em; border:1px solid #c8cff7;}
+    .success { background:#e6ffe6; color:#007700; border-color: #b0e6b0; }
+    .fail { background:#ffe6e6; color:#c00; border-color: #ffb6b6; }
+    @media (max-width:600px) { body {padding:0.5em;} table, th, td {font-size:0.94em;} }
   </style>
 </head>
 <body>
 
-  <h2>🔋 보조배터리 기내 반입 종합 판정기 (최대 5종류입력)</h2>
+  <h2>🔋 보조배터리 기내 반입 판정기 <small style="font-size:0.7em;">(통합 기능)</small></h2>
   <div class="explain">
-    <b>사용방법:</b> 아래 표에 최대 5종류 보조배터리의 <b>mAh</b>, <b>전압(V)</b>, <b>수량</b>을 입력하고, <b>기내 반입 가능 여부 확인</b>을 누르세요.<br>
-    <span style="color:#555;">100Wh 이하: 최대 5개, 100~160Wh: 최대 2개, 160Wh 초과: 반입 불가</span>
+    ① 여러종류(최대 5개) 배터리, 또는<br>
+    ② 간단 단일 배터리 중 <b>원하는 방식</b>으로 입력 후 판정 버튼을 누르세요.<br>
+    <span style="color:#444;">(100Wh 이하: 최대 5개, 100~160Wh: 최대 2개, 160Wh 초과: 불가)</span>
   </div>
+
+  <!-- 복수(5개까지) 입력 폼 -->
   <table>
     <thead>
       <tr>
@@ -118,17 +70,24 @@
     </tbody>
   </table>
 
-  <button onclick="evaluate()">📦 기내 반입 가능 여부 확인</button>
+  <button onclick="evaluate()">📦 (표 입력) 기내 반입 가능 여부 확인</button>
   <div id="resultBox"></div>
 
-  <script>
-    function evaluate() {
-      let totalQty100 = 0;
-      let totalQty160 = 0;
-      let hasOver160 = false;
-      let totalItems = 0;
-      let errors = [];
+  <hr style="margin:2.5em 0">
 
+  <h3 style="font-size:1.07em;">🟢 단일 배터리 빠른 확인</h3>
+  <p>용량 (mAh): <input type="number" id="mah" value="20000"></p>
+  <p>전압 (V): <input type="number" id="volt" value="3.7"></p>
+  <p>수량: <input type="number" id="qty" value="2"></p>
+  <button onclick="evaluateSimple()">▶️ (단일 입력) 기내 반입 가능 여부 확인</button>
+  <div id="simpleResultBox"></div>
+
+
+  <script>
+    // [A] 표 방식(최대 5행) 종합 판정
+    function evaluate() {
+      let totalQty100 = 0, totalQty160 = 0, hasOver160 = false, totalItems = 0;
+      let errors = [];
       for (let i = 1; i <= 5; i++) {
         const mah = parseFloat(document.getElementById(`mah${i}`).value);
         const volt = parseFloat(document.getElementById(`volt${i}`).value);
@@ -137,50 +96,61 @@
         if (!isNaN(mah) && !isNaN(volt) && !isNaN(qty)) {
           const wh = (mah * volt) / 1000;
           totalItems += qty;
-
-          if (wh <= 100) {
-            totalQty100 += qty;
-          } else if (wh > 100 && wh <= 160) {
-            totalQty160 += qty;
-          } else if (wh > 160) {
-            hasOver160 = true;
-            errors.push(`행 ${i}: <b>${wh.toFixed(2)}Wh</b> (160Wh 초과)`);
-          }
+          if (wh <= 100)       totalQty100 += qty;
+          else if (wh <= 160)  totalQty160 += qty;
+          else { hasOver160 = true; errors.push(`행 ${i}: <b>${wh.toFixed(2)}Wh</b> (160Wh 초과)`);}
         }
       }
-
       const resultBox = document.getElementById('resultBox');
       resultBox.className = "";
-
       if (totalItems === 0) {
-        resultBox.className = 'fail';
-        resultBox.innerHTML = `⚠️ 하나 이상의 배터리 정보를 입력해주세요.`;
+        resultBox.className='fail';
+        resultBox.innerHTML = `⚠️ 하나 이상의 배터리 정보를 입력하세요.`;
         return;
       }
-
       if (hasOver160) {
-        resultBox.className = 'fail';
-        resultBox.innerHTML = `❌ <strong>기내 반입 불가</strong><br>160Wh를 초과한 배터리는 반입할 수 없습니다:<br>`
-          + errors.join('<br>');
+        resultBox.className='fail';
+        resultBox.innerHTML = `❌ <strong>기내 반입 불가</strong><br>160Wh 초과 불가:<br>`+ errors.join('<br>');
         return;
       }
-
       let reasons = [];
-      if (totalQty100 > 5) {
-        reasons.push(`🔴 100Wh 이하 배터리는 최대 <b>5개</b>까지 반입 가능 (입력: ${totalQty100}개)`);
-      }
-      if (totalQty160 > 2) {
-        reasons.push(`🔴 100~160Wh 배터리는 최대 <b>2개</b>까지 반입 가능 (입력: ${totalQty160}개)`);
-      }
-
+      if (totalQty100 > 5)
+        reasons.push(`🔴 100Wh 이하 배터리는 최대 <b>5개</b> (입력: ${totalQty100}개)`);
+      if (totalQty160 > 2)
+        reasons.push(`🔴 100~160Wh 배터리는 최대 <b>2개</b> (입력: ${totalQty160}개)`);
       if (reasons.length > 0) {
-        resultBox.className = 'fail';
-        resultBox.innerHTML = `❌ <strong>기내 반입 불가</strong><br>` + reasons.join("<br>");
+        resultBox.className='fail';
+        resultBox.innerHTML = `❌ <strong>기내 반입 불가</strong><br>`+reasons.join("<br>");
       } else {
-        resultBox.className = 'success';
-        resultBox.innerHTML = `✅ <strong>기내 반입 가능</strong><br>
-        총 입력: ${totalItems}개<br>
-        100Wh 이하: ${totalQty100}개 / 100~160Wh: ${totalQty160}개`;
+        resultBox.className='success';
+        resultBox.innerHTML = `✅ <strong>기내 반입 가능</strong><br>합계: ${totalItems}개<br>100Wh 이하: ${totalQty100}개 / 100~160Wh: ${totalQty160}개`;
+      }
+    }
+    // [B] 단일 입력 신속 판정
+    function evaluateSimple() {
+      const mah = parseFloat(document.getElementById('mah').value);
+      const volt = parseFloat(document.getElementById('volt').value);
+      const qty  = parseInt(document.getElementById('qty').value);
+      const wh = (mah * volt) / 1000;
+      const simpleResultBox = document.getElementById('simpleResultBox');
+      simpleResultBox.className="";
+      if (isNaN(mah) || isNaN(volt) || isNaN(qty)) {
+        simpleResultBox.className='fail';
+        simpleResultBox.innerHTML = "⚠️ 값을 모두 입력하세요.";
+        return;
+      }
+      if (wh <= 100 && qty <= 5) {
+        simpleResultBox.className='success';
+        simpleResultBox.innerHTML = `✅ 반입 가능 (${wh.toFixed(2)}Wh × ${qty}개)`;
+      } else if (wh > 100 && wh <= 160 && qty <= 2) {
+        simpleResultBox.className='success';
+        simpleResultBox.innerHTML = `✅ 항공사 승인 시 반입 가능 (${wh.toFixed(2)}Wh × ${qty}개)`;
+      } else if (wh > 160) {
+        simpleResultBox.className='fail';
+        simpleResultBox.innerHTML = `❌ 반입 불가: ${wh.toFixed(2)}Wh는 160Wh를 초과`;
+      } else {
+        simpleResultBox.className='fail';
+        simpleResultBox.innerHTML = "❌ 수량 또는 용량이 제한 초과";
       }
     }
   </script>
