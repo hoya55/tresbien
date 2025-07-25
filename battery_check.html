@@ -40,28 +40,25 @@
   </tbody>
 </table>
 
-<button onclick="evaluate()">📦 (표입력) 기내 반입 가능 여부 확인</button>
+<button id="checkButton">🧮 기내 반입 가능 여부 확인</button>
 
 <div id="resultBox"></div>
 
 <script>
+  // 전역 함수로 정의
   function evaluate() {
     let total100 = 0, total160 = 0, hasOver = false;
-    let summary = '', total = 0;
-    let errors = [];
-
+    let errors = [], total = 0;
     for (let i = 1; i <= 5; i++) {
       const mah = parseFloat(document.getElementById('mah' + i).value);
       const volt = parseFloat(document.getElementById('volt' + i).value);
       const qty = parseInt(document.getElementById('qty' + i).value);
-
       if (!isNaN(mah) && !isNaN(volt) && !isNaN(qty)) {
         const wh = (mah * volt) / 1000;
         total += qty;
-
         if (wh <= 100) total100 += qty;
-        else if (wh > 100 && wh <= 160) total160 += qty;
-        else if (wh > 160) {
+        else if (wh <= 160) total160 += qty;
+        else {
           hasOver = true;
           errors.push(`행 ${i}: ${wh.toFixed(2)}Wh > 160Wh`);
         }
@@ -69,31 +66,34 @@
     }
 
     const box = document.getElementById('resultBox');
-
     if (total === 0) {
       box.className = 'fail';
       box.innerHTML = '⚠️ 입력된 배터리 정보가 없습니다.';
       return;
     }
-
     if (hasOver) {
       box.className = 'fail';
       box.innerHTML = `❌ 반입 불가<br>${errors.join('<br>')}`;
       return;
     }
 
-    let warning = [];
-    if (total100 > 5) warning.push(`100Wh 이하 배터리는 최대 5개 (입력: ${total100}개)`);
-    if (total160 > 2) warning.push(`100~160Wh 배터리는 최대 2개 (입력: ${total160}개)`);
+    let warnings = [];
+    if (total100 > 5) warnings.push(`100Wh 이하 배터리는 최대 5개 (입력: ${total100}개)`);
+    if (total160 > 2) warnings.push(`100~160Wh 배터리는 최대 2개 (입력: ${total160}개)`);
 
-    if (warning.length > 0) {
+    if (warnings.length > 0) {
       box.className = 'fail';
-      box.innerHTML = '❌ 반입 불가<br>' + warning.join('<br>');
+      box.innerHTML = `❌ 반입 불가<br>${warnings.join('<br>')}`;
     } else {
       box.className = 'success';
-      box.innerHTML = `✅ 반입 가능<br>총 ${total}개 (100Wh 이하 ${total100}, 100~160Wh ${total160})`;
+      box.innerHTML = `✅ 반입 가능<br>총 ${total}개 입력됨<br>100Wh 이하: ${total100}개 / 100~160Wh: ${total160}개`;
     }
   }
+
+  // DOM이 로드된 후 버튼에 이벤트 연결
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('checkButton').addEventListener('click', evaluate);
+  });
 </script>
 
 </body>
