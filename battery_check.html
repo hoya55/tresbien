@@ -1,100 +1,96 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>보조배터리 기내 반입 판정기</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; background:#f0f0f0; padding:2em; }
-    table { width:100%; border-collapse:collapse; background:#fff; }
-    th, td { border:1px solid #ccc; padding:0.6em; text-align:center; }
-    th { background-color:#e8e8e8; }
-    input { width: 100%; padding: 0.4em; box-sizing: border-box;}
-    button { margin-top:1em; padding:0.7em 1.5em; background:#1658a0; color:#fff; border:none; border-radius:5px; font-size:1em; cursor:pointer; }
-    button:hover { background:#0e407a; }
-    #resultBox { margin-top:2em; padding:1em; border-radius:8px; font-weight:bold; background:#fff; border:1px solid #ccc; min-height:2em; }
-    .success { background:#e6ffe6; color:#006600; border-color:#aad9aa; }
-    .fail { background:#ffe6e6; color:#cc0000; border-color:#e8aaaa; }
-  </style>
-</head>
-<body>
-
-<h2>🔋 보조배터리 기내 반입 판정기 (5개 입력)</h2>
-
-<p>각 배터리의 mAh, 전압(V), 개수를 입력 후 아래 버튼을 클릭하세요.<br>(100Wh 이하: 최대 5개, 100~160Wh: 최대 2개, 160Wh 초과: 반입 불가)</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>용량 (mAh)</th>
-      <th>전압 (V)</th>
-      <th>수량 (개)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>1</td><td><input id="mah1"></td><td><input id="volt1"></td><td><input id="qty1"></td></tr>
-    <tr><td>2</td><td><input id="mah2"></td><td><input id="volt2"></td><td><input id="qty2"></td></tr>
-    <tr><td>3</td><td><input id="mah3"></td><td><input id="volt3"></td><td><input id="qty3"></td></tr>
-    <tr><td>4</td><td><input id="mah4"></td><td><input id="volt4"></td><td><input id="qty4"></td></tr>
-    <tr><td>5</td><td><input id="mah5"></td><td><input id="volt5"></td><td><input id="qty5"></td></tr>
-  </tbody>
-</table>
-
-<button id="checkButton">🧮 기내 반입 가능 여부 확인</button>
-
-<div id="resultBox"></div>
+<!-- 보조배터리 기내 반입 판정기 -->
+<div style="max-width:900px; margin:0 auto; background:#f0f0f0; padding:2em; font-family:Arial,sans-serif;">
+  <h2>🔋 보조배터리 기내 반입 판정기 (5개 입력)</h2>
+  <p>각 배터리의 mAh, 전압(V), 개수를 입력 후 아래 버튼을 클릭하세요.<br>
+  (100Wh 이하: 최대 5개, 100~160Wh: 최대 2개, 160Wh 초과: 반입 불가)</p>
+  <table style="width:100%; border-collapse:collapse; background:#fff;">
+    <thead>
+      <tr style="background-color:#e8e8e8;">
+        <th style="border:1px solid #ccc; padding:0.6em;">#</th>
+        <th style="border:1px solid #ccc; padding:0.6em;">용량 (mAh)</th>
+        <th style="border:1px solid #ccc; padding:0.6em;">전압 (V)</th>
+        <th style="border:1px solid #ccc; padding:0.6em;">수량 (개)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="border:1px solid #ccc; padding:0.6em;">1</td><td><input id="mah1" style="width:100%; padding:0.4em;"></td><td><input id="volt1" style="width:100%; padding:0.4em;"></td><td><input id="qty1" style="width:100%; padding:0.4em;"></td></tr>
+      <tr><td style="border:1px solid #ccc; padding:0.6em;">2</td><td><input id="mah2" style="width:100%; padding:0.4em;"></td><td><input id="volt2" style="width:100%; padding:0.4em;"></td><td><input id="qty2" style="width:100%; padding:0.4em;"></td></tr>
+      <tr><td style="border:1px solid #ccc; padding:0.6em;">3</td><td><input id="mah3" style="width:100%; padding:0.4em;"></td><td><input id="volt3" style="width:100%; padding:0.4em;"></td><td><input id="qty3" style="width:100%; padding:0.4em;"></td></tr>
+      <tr><td style="border:1px solid #ccc; padding:0.6em;">4</td><td><input id="mah4" style="width:100%; padding:0.4em;"></td><td><input id="volt4" style="width:100%; padding:0.4em;"></td><td><input id="qty4" style="width:100%; padding:0.4em;"></td></tr>
+      <tr><td style="border:1px solid #ccc; padding:0.6em;">5</td><td><input id="mah5" style="width:100%; padding:0.4em;"></td><td><input id="volt5" style="width:100%; padding:0.4em;"></td><td><input id="qty5" style="width:100%; padding:0.4em;"></td></tr>
+    </tbody>
+  </table>
+  <button onclick="evaluateBatteries()" style="margin-top:1em; padding:0.7em 1.5em; background:#1658a0; color:#fff; border:none; border-radius:5px; font-size:1em; cursor:pointer;">🧮 기내 반입 가능 여부 확인</button>
+  <div id="resultBox" style="margin-top:2em; padding:1em; border-radius:8px; font-weight:bold; background:#fff; border:1px solid #ccc; min-height:2em;"></div>
+</div>
 
 <script>
-  // 전역 함수로 정의
-  function evaluate() {
-    let total100 = 0, total160 = 0, hasOver = false;
-    let errors = [], total = 0;
-    for (let i = 1; i <= 5; i++) {
-      const mah = parseFloat(document.getElementById('mah' + i).value);
-      const volt = parseFloat(document.getElementById('volt' + i).value);
-      const qty = parseInt(document.getElementById('qty' + i).value);
-      if (!isNaN(mah) && !isNaN(volt) && !isNaN(qty)) {
-        const wh = (mah * volt) / 1000;
-        total += qty;
-        if (wh <= 100) total100 += qty;
-        else if (wh <= 160) total160 += qty;
-        else {
-          hasOver = true;
-          errors.push(`행 ${i}: ${wh.toFixed(2)}Wh > 160Wh`);
-        }
+function evaluateBatteries() {
+  let total100 = 0, total160 = 0, hasOver = false;
+  let errors = [], total = 0;
+  let info100 = [], info160 = [];
+
+  for (let i = 1; i <= 5; i++) {
+    const mah = parseFloat(document.getElementById('mah' + i).value);
+    const volt = parseFloat(document.getElementById('volt' + i).value);
+    const qty = parseInt(document.getElementById('qty' + i).value);
+
+    if (!isNaN(mah) && !isNaN(volt) && !isNaN(qty)) {
+      const wh = (mah * volt) / 1000;
+      total += qty;
+
+      if (wh <= 100) {
+        total100 += qty;
+        info100.push(`${wh.toFixed(1)}Wh ${qty}개`);
+      } else if (wh <= 160) {
+        total160 += qty;
+        info160.push(`${wh.toFixed(1)}Wh ${qty}개`);
+      } else {
+        hasOver = true;
+        errors.push(`행 ${i}: ${wh.toFixed(1)}Wh > 160Wh`);
       }
-    }
-
-    const box = document.getElementById('resultBox');
-    if (total === 0) {
-      box.className = 'fail';
-      box.innerHTML = '⚠️ 입력된 배터리 정보가 없습니다.';
-      return;
-    }
-    if (hasOver) {
-      box.className = 'fail';
-      box.innerHTML = `❌ 반입 불가<br>${errors.join('<br>')}`;
-      return;
-    }
-
-    let warnings = [];
-    if (total100 > 5) warnings.push(`100Wh 이하 배터리는 최대 5개 (입력: ${total100}개)`);
-    if (total160 > 2) warnings.push(`100~160Wh 배터리는 최대 2개 (입력: ${total160}개)`);
-
-    if (warnings.length > 0) {
-      box.className = 'fail';
-      box.innerHTML = `❌ 반입 불가<br>${warnings.join('<br>')}`;
-    } else {
-      box.className = 'success';
-      box.innerHTML = `✅ 반입 가능<br>총 ${total}개 입력됨<br>100Wh 이하: ${total100}개 / 100~160Wh: ${total160}개`;
     }
   }
 
-  // DOM이 로드된 후 버튼에 이벤트 연결
-  document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('checkButton').addEventListener('click', evaluate);
-  });
-</script>
+  const box = document.getElementById('resultBox');
+  box.className = '';
+  box.style.color = '';
+  box.style.backgroundColor = '';
+  box.style.borderColor = '';
 
-</body>
-</html>
+  if (total === 0) {
+    box.innerHTML = '⚠️ 입력된 배터리 정보가 없습니다.';
+    box.style.color = '#cc0000';
+    box.style.backgroundColor = '#ffe6e6';
+    box.style.borderColor = '#e8aaaa';
+    return;
+  }
+
+  if (hasOver) {
+    box.innerHTML = `❌ 반입 불가<br>${errors.join('<br>')}`;
+    box.style.color = '#cc0000';
+    box.style.backgroundColor = '#ffe6e6';
+    box.style.borderColor = '#e8aaaa';
+    return;
+  }
+
+  let warnings = [];
+  if (total100 > 5) warnings.push(`100Wh 이하 배터리는 최대 5개 (입력: ${total100}개)`);
+  if (total160 > 2) warnings.push(`100~160Wh 배터리는 최대 2개 (입력: ${total160}개)`);
+
+  if (warnings.length > 0) {
+    box.innerHTML = `❌ 반입 불가<br>${warnings.join('<br>')}`;
+    box.style.color = '#cc0000';
+    box.style.backgroundColor = '#ffe6e6';
+    box.style.borderColor = '#e8aaaa';
+  } else {
+    let msg = `✅ 반입 가능<br>총 ${total}개 입력됨`;
+    if (info100.length > 0) msg += `<br>100Wh 이하: ${info100.join(', ')}`;
+    if (info160.length > 0) msg += `<br>100~160Wh: ${info160.join(', ')}`;
+    box.innerHTML = msg;
+    box.style.color = '#006600';
+    box.style.backgroundColor = '#e6ffe6';
+    box.style.borderColor = '#aad9aa';
+  }
+}
+</script>
